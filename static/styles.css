@@ -1,0 +1,19 @@
+:root {
+    --main-color: #478800
+}
+
+*, html, body {
+    margin: 0;
+    padding: 0;
+}
+
+nav {
+    display: flex;
+    width: 100%;
+    background-color: var(--main-color);
+}
+nav .title {
+    font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+    color: whitesmoke;
+    padding: 15px;
+}
