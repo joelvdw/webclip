@@ -9,17 +9,18 @@ from pydantic import BaseModel
 class ClipFile(BaseModel):
     name: str
     filename: str
+    filetype: str
+    size: int
 
 class ClipNoteDTO(BaseModel):
-    text: str
+    text: str | None
     files: List[ClipFile]
-    type: str
 
 class ClipNote(BaseModel):
     id: int
     creation_date: datetime
-    text: str
-    files: List[str]
+    text: str | None
+    files: List[ClipFile]
 
 fake_list: List[ClipNote] = []
 next_id = 1
@@ -32,21 +33,23 @@ def get_note(id: int) -> ClipNote | None:
         if e.id == id:
             return e
 
-def add_note(noteDTO: ClipNoteDTO) -> bool:
+def add_note(note_dto: ClipNoteDTO) -> ClipNote:
     global next_id
+    global fake_list
+    
     note = ClipNote(
         id = next_id,
         creation_date = datetime.now(),
-        text = noteDTO.text,
-        files = noteDTO.files
+        text = note_dto.text,
+        files = note_dto.files
     )
     next_id += 1
     fake_list.append(note)
     return note
 
 # Delete a note
-# Return true if found, false otherwise
-def delete_note(id: int) -> bool:
+# Return the note if found, None otherwise
+def delete_note(id: int) -> ClipNote | None:
     el = None
     for e in fake_list:
         if e.id == id:
@@ -56,4 +59,4 @@ def delete_note(id: int) -> bool:
     if el != None:
         fake_list.remove(el)
     
-    return el != None
+    return el
