@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 class ClipFile(BaseModel):
     name: str
-    filename: str
+    filepath: str
     filetype: str
     size: int
 
@@ -26,6 +26,7 @@ fake_list: List[ClipNote] = []
 next_id = 1
 
 def get_notes() -> List[ClipNote]:
+    # must return note orber by date desc
     return fake_list
 
 def get_note(id: int) -> ClipNote | None:

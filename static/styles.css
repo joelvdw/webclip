@@ -1,10 +1,20 @@
 :root {
-    --main-color: #478800
+    --main-color: #478800;
+    --main-dark: #325f00;
+    --main-darker: #244400;
+    --main-light: #7eac4d;
+    --red: rgba(220, 23, 23, 0.9);
 }
 
 *, html, body {
     margin: 0;
     padding: 0;
+}
+
+html, body {
+    height: 100%;
+    background-color: antiquewhite;
+    color: #333;
 }
 
 nav {
@@ -14,6 +24,411 @@ nav {
 }
 nav .title {
     font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
-    color: whitesmoke;
-    padding: 15px;
+    color: white;
+    padding: 12px 18px;
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+  'FILL' 0,
+  'wght' 400,
+  'GRAD' 0,
+  'opsz' 24;
+  user-select: none;
+}
+
+input, button, textarea {
+    position: relative;
+    display: inline-flex;
+    box-sizing:border-box;
+    padding: 0.5em 1em;
+    line-height: 1.5;
+    font-size: 1rem;
+    background-color: #fefefe;
+    border: 1px #bbb solid;
+    border-radius: 3px;
+    box-shadow: rgba(10, 10, 10, 0.05) 0px 1px 2px 0px inset;
+    
+    &:hover {
+        border-color: #999;
+    }
+    
+    &:focus, &:active {
+        border-color: #777;
+        outline: none;
+        box-shadow: rgba(150, 150, 150, 0.15) 0px 0px 0px 2px;
+    }
+}
+
+button {
+    cursor: pointer;
+    padding: 0.5em;
+    white-space: nowrap;
+    box-shadow: none;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+
+    &:active {
+        background-color: #f6f6f6;
+        color: var(--main-color);
+    }
+}
+button span {
+    height: 1em;
+    width: 1em;
+    display: inline-block;
+    font-style: normal;
+    font-variant: normal;
+    text-rendering: auto;
+    line-height: 1.5;
+}
+button.priority {
+    color: var(--main-color);
+    border-color: var(--main-color);
+
+    &:hover {
+        color: var(--main-dark);
+        border-color: var(--main-dark);
+    }
+    &:active, &:focus {
+        border-color: var(--main-darker);
+        box-shadow: rgba(71, 136, 0, 0.15) 0px 0px 0px 2px;
+    }
+}
+button.normal {
+    color: #333;
+    border-color: #bbb;
+
+    &:hover {
+        color: #333;
+        border-color: #444;
+    }
+    &:active, &:focus {
+        border-color: #333;
+        box-shadow: rgba(150, 150, 150, 0.15) 0px 0px 0px 2px;
+    }
+}
+button.red {
+    color: var(--red);
+    border-color: var(--red);
+
+    &:hover {
+        color: darkred;
+        border-color: darkred;
+    }
+    &:active, &:focus {
+        border-color: #500;
+        box-shadow: rgba(100, 0, 0, 0.15) 0px 0px 0px 2px;
+    }
+}
+
+.group {
+    display: flex;
+
+    & input, & button {
+        border-radius: 0;
+        border-right-width: 0px;
+    }
+    & :first-child {
+        border-top-left-radius: 3px;
+        border-bottom-left-radius: 3px;
+    }
+    & :last-child {
+        border-right-width: 1px;
+        border-top-right-radius: 3px;
+        border-bottom-right-radius: 3px;
+    }
+    & input {
+        flex: 1;
+    }
+}
+
+.content {
+    display: flex;
+    flex-flow: column;
+    height: calc(100% - 3.2rem - 24px);
+}
+.content .row {
+    width: 100%;
+    display: flex;
+}
+.content .row.fill {
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+.row > * {
+    width: 100%;
+    max-width: 800px;
+    margin: 0.5rem auto;
+    padding: 0 0.5rem;
+}
+
+
+.row header {
+    display: flex;
+    flex: 0 1 auto;
+    margin: 1rem auto;
+}
+.search {
+    flex: 1;
+    width: 100%;
+    box-shadow: rgba(99, 99, 99, 0.1) 0px 2px 8px 0px;
+}
+header .add {
+    margin-left: 0.5rem;
+}
+
+.row section {
+    flex: 1 1 auto;
+    display: flex;
+    flex-flow: column;
+    margin: 0 auto;
+}
+
+article {
+    background-color: #ffe;
+    flex: 0 1 auto;
+    margin-bottom: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-shadow: rgba(150, 150, 150, 0.1) 0px 2px 8px 0px;
+
+    &:last-of-type {
+        margin-bottom: 0;
+    }
+}
+
+article .data, article .foot {
+    width: calc(100% - 1.5rem);
+    padding: 0.5rem 0.75rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+article .data {
+    flex-flow: column;
+}
+
+article .data > div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+article .text {
+    min-height: 4rem;
+}
+
+article .text p {
+    border: 1px solid #e5e5e5;
+    flex: 1;
+    margin: 0.25rem;
+    padding: 0.75rem;
+    border-radius: 3px;
+}
+
+article div span {
+    margin-left: 0.5rem;
+    padding: 0.25rem;
+}
+
+article span.material-symbols-outlined:not(.file-icon),
+.modal span.material-symbols-outlined:not(.file-icon) {
+    cursor: pointer;
+    width: 1.5rem;
+    height: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #333;
+
+    &:hover {
+        color: var(--main-color);
+    }
+    &:active {
+        font-size: 1.4em;
+    }
+    &:visited {
+        color: #333;
+    }
+}
+
+.file .file-icon {
+    font-size: 50px;
+    font-variation-settings: 'FILL' 0, 'wght' 100, 'GRAD' 0, 'opsz' 24;
+    margin-left: 0;
+    color: var(--main-color);
+}
+
+.file p {
+    flex: 1;
+    font-family: Helvetica, sans-serif;
+    position: relative;
+    top: 0.2rem;
+}
+
+.file .size {
+    color: #666;
+    font-size: 0.9em;
+    margin-left: 0.5rem;
+}
+
+article .foot {
+    border-top: 1px #ccc dashed;
+}
+
+.foot .date {
+    flex: 1;
+    font-size: 0.9em;
+    color: #666;
+}
+
+footer {
+    display: flex;
+    flex: 0 1 auto;
+    color: #666;
+
+    & p {
+        padding: 0.5rem;
+        text-align: center;
+        flex: 1;
+    }
+}
+
+.loading {
+    width: 100%;
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.load {
+    font-size: 2em;
+}
+.loading .load::after {
+    animation: spinAround .6s infinite linear;
+    border: 3px solid hsl(0deg,0%,75%);
+    border-radius: 9999px;
+    border-right-color: transparent;
+    border-top-color: transparent;
+    content: "";
+    display: block;
+    height: 1em;
+    position: relative;
+    width: 1em;
+}
+@keyframes spinAround {
+    from {
+      transform:rotate(0)
+    }
+    to {
+      transform:rotate(359deg)
+    }
+}
+
+.alert {
+    position: fixed;
+    bottom: 0;
+    margin: 2rem calc(50% - 200px);
+    border-radius: 3px;
+    background-color: var(--red);
+    opacity: 0;
+    color: white;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    width: 400px;
+    max-width: 90%;
+    transition: opacity 1s;
+    z-index: 10;
+
+    &.visible {
+        opacity: 0.9;
+    }
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(50, 50, 50, 0.6);
+    z-index: 5;
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    &.visible {
+        display: flex;
+    }
+}
+.modal .modal-content {
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    width: 600px;
+    max-width: 90%;
+    max-height: 80%;
+    margin: 0 5%;
+    background-color: #fefefe;
+    padding: 1rem;
+}
+.modal .buttons, .modal .inputs {
+    width: calc(100% - 10px);
+    max-width: calc(100% - 10px);
+    min-width: calc(100% - 10px);
+    display: flex;
+}
+.modal .inputs {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    flex-flow: column;
+    padding: 0 5px;
+}
+.modal .buttons {
+    padding: 0 5px;
+}
+.modal textarea, .modal .add-files {
+    display: flex;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+}
+.modal textarea {
+    max-height: 30em;
+    min-height: 4em;
+    height: 20em;
+    line-height: 1;
+    padding: 8px;
+}
+.modal input[type=file] {
+    display: none;
+}
+.modal .buttons {
+    column-gap: 0.5rem;
+    margin-top: 1rem;
+}
+.modal .buttons > button {
+    flex: 1 1 auto;
+}
+.modal .file-icon {
+    font-size: 40px;
+}
+.modal .add-files {
+    flex-flow: column;
+    margin: 0.25rem 0;
+}
+.modal .file {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+.modal .file p {
+    top: 0.075rem;
 }

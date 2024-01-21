@@ -2,13 +2,145 @@
 <html lang="fr">
 <head>
     <title>{{ title }}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet" type="text/css">
 </head>
-<body>
+<body onload="getNotes()">
     <nav>
         <h2 class="title">{{ title }}</h2>
     </nav>
+    <div class="content">
+        <div class="row">
+            <header>
+                <div class="search group">
+                    <input type="text" name="search"><button><span class="material-symbols-outlined">search</span></button>
+                </div>
+                <button class="add" onclick="showModal()"><span class="material-symbols-outlined">add</span></button>
+            </header>
+        </div>
+        <div class="row fill">
+            <section>
+                <div class="loading"><span class="load"></span></div>
+                <!--article>
+                    <div class="data">
+                        <div class="text">
+                            <p>TEST cezeievsibvwiv</p>
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </div>
+                        <div class="file">
+                            <span class="file-icon material-symbols-outlined">file_present</span>
+                            <p>Filename.txt <span class="size">34kB</span></p>
+                            <span class="material-symbols-outlined">download</span>
+                        </div>
+                    </div>
+                    <div class="foot">
+                        <p class="date">14 janvier 2024 12:45</p>
+                        <span class="material-symbols-outlined">delete</span>
+                    </div>
+                </article>
+                <article>
+                    <div class="data">
+                        <div class="text">
+                            <p>TEST cezeievsibvwiv</p>
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </div>
+                    </div>
+                    <div class="foot">
+                        <p class="date">14 janvier 2024 12:45</p>
+                        <span class="material-symbols-outlined">delete</span>
+                    </div>
+                </article>
+                <article>
+                    <div class="data">
+                        <div class="text">
+                            <p>TEST cezeievsibvwiv</p>
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </div>
+                        <div class="file">
+                            <span class="file-icon material-symbols-outlined">folder_zip</span>
+                            <p>Filename.txt <span class="size">34kB</span></p>
+                            <span class="material-symbols-outlined">download</span>
+                        </div>
+                        <div class="file">
+                            <span class="file-icon material-symbols-outlined">description</span>
+                            <p>Filename.txt <span class="size">34kB</span></p>
+                            <span class="material-symbols-outlined">download</span>
+                        </div>
+                    </div>
+                    <div class="foot">
+                        <p class="date">14 janvier 2024 12:45</p>
+                        <span class="material-symbols-outlined">delete</span>
+                    </div>
+                </article>
+                <article>
+                    <div class="data">
+                        <div class="file">
+                            <span class="file-icon material-symbols-outlined">image</span>
+                            <p>Filename.txt <span class="size">34kB</span></p>
+                            <span class="material-symbols-outlined">download</span>
+                        </div>
+                    </div>
+                    <div class="foot">
+                        <p class="date">14 janvier 2024 12:45</p>
+                        <span class="material-symbols-outlined">delete</span>
+                    </div>
+                </article>
+                <article>
+                    <div class="data">
+                        <div class="text">
+                            <p>TEST cezeievsibvwiv</p>
+                            <span class="material-symbols-outlined">content_copy</span>
+                        </div>
+                        <div class="file">
+                            <span class="file-icon material-symbols-outlined">gif_box</span>
+                            <p>Filename.txt <span class="size">34kB</span></p>
+                            <span class="material-symbols-outlined">download</span>
+                        </div>
+                    </div>
+                    <div class="foot">
+                        <p class="date">14 janvier 2024 12:45</p>
+                        <span class="material-symbols-outlined">delete</span>
+                    </div>
+                </article-->
+            </section>  
+        </div>
+    </div>
 
+    <div class="alert">
+        <p>Ceci est une alerte</p>
+    </div>
+    <div class="modal" id="modal">
+        <form class="modal-content">
+            <input type="file" name="files" multiple="true" onchange="takeFilesFromInput()">
+            <div class="inputs">
+                <textarea></textarea>
+                <div class="add-files">
+                    <!--div class="file">
+                        <span class="file-icon material-symbols-outlined">image</span>
+                        <p>Filename.txt <span class="size">34kB</span></p>
+                        <span class="material-symbols-outlined">close</span>
+                    </div>
+                    <div class="file">
+                        <span class="file-icon material-symbols-outlined">image</span>
+                        <p>Filename.txt <span class="size">34kB</span></p>
+                        <span class="material-symbols-outlined">close</span>
+                    </div>
+                    <div class="file">
+                        <span class="file-icon material-symbols-outlined">image</span>
+                        <p>Filename.txt <span class="size">34kB</span></p>
+                        <span class="material-symbols-outlined">close</span>
+                    </div-->
+                </div>
+            </div>
+            <div class="buttons">
+                <button class="priority" type="button" onclick="sendForm()">Envoyer</button>
+                <button class="normal" type="button" onclick="openFileInput()">Ajouter des fichiers</button>
+                <button class="red" type="button" onclick="hideModal()">Annuler</button>
+            </div>
+        </form>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.2.7.nomodule.min.js"></script>
     <script src="{{ url_for('static', path='/script.js') }}" type="text/javascript"></script>
 </body>
 </html>

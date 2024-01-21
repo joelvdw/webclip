@@ -78,11 +78,14 @@ def copy_files(files: list[UploadFile]) -> List[str]:
 
 
 @app.post("/notes", status_code=201)
-def post_note(response: Response, files: List[UploadFile], text: Optional[str] = Form(None)):
+def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] = None, text: Optional[str] = Form(None)):
+    print(text, files)
     if not text and not files:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return "At least a text or a file must be present"
 
+    if files is None:
+        files = []
     files = filter_files(files)
 
     saved_files = copy_files(files)
@@ -91,13 +94,11 @@ def post_note(response: Response, files: List[UploadFile], text: Optional[str] =
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return "Failed to save files"
     
-    print(saved_files)
-
     dto = ClipNoteDTO(
         text=text,
         files=[ClipFile(
             name=uf.filename if uf.filename else "File",
-            filename=name,
+            filepath="/uploads/" + name,
             filetype=uf.content_type if uf.content_type else "application/octet-stream",
             size=uf.size if uf.size is not None else -1
         ) for (uf, name) in zip(files, saved_files)]
