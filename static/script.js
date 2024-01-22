@@ -58,7 +58,7 @@ function formatFilename(name, max = 30) {
 /// VanJS objects ///
 
 const FileUploadItem = (f) => div({class: "file"}, [
-    span({class: "file-icon material-symbols-outlined"}, "image"),
+    span({class: "file-icon material-symbols-outlined"}, iconFromType(f.type)),
     p(formatFilename(f.name, 20), span({class: "size"}, formatSize(f.size))),
     span({class: "material-symbols-outlined", onclick: () => removeUploadFile(f.name)}, "close")
 ]);
@@ -84,6 +84,21 @@ const NoteItem = (note) => article({id: "note" + note.id},
     )
 );
 
+/// KEYPRESS ///
+
+document.onkeydown = function (e) {
+    if (e.ctrlKey && e.key == "Enter" && document.getElementById('modal').classList.contains('visible')) {
+        e.preventDefault();
+        sendForm();
+    }
+    if (e.key == 'n'
+            && !document.getElementById('modal').classList.contains('visible')
+            && document.getElementById('search') !== document.activeElement) {
+        e.preventDefault();
+        showModal();
+    }
+};
+
 
 /// AJAX ///
 
@@ -94,17 +109,17 @@ function getNotes() {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200 || xhr.status === 201) {
                 notes = JSON.parse(xhr.responseText);
-                let container = document.querySelector("section");
-                container.innerHTML = "";
-                for (let i = 0; i < notes.length; i++) {
-                    container.appendChild(NoteItem(notes[i]));                    
-                }
+                displayNotes(notes);
             } else {
+                document.querySelector("section").innerHTML = "Une erreur est survenue.";
                 showAlert("Error: " + xhr.responseText);
             }
         }
     };
-    xhr.onerror = (e) => showAlert("Error: " + e);
+    xhr.onerror = (e) => {
+        document.querySelector("section").innerHTML = "Une erreur est survenue.";
+        showAlert("Error: " + JSON.stringify(e));
+    }
     xhr.send();
 }
 function postNote(formData, onSuccess) {
@@ -119,7 +134,7 @@ function postNote(formData, onSuccess) {
             }
         }
     };
-    xhr.onerror = (e) => showAlert("Erreur: " + e);
+    xhr.onerror = (e) => showAlert("Erreur: " + JSON.stringify(e));
     xhr.send(formData);
 }
 function deleteNote(id) {
@@ -135,34 +150,89 @@ function deleteNote(id) {
             }
         }
     };
-    xhr.onerror = (e) => showAlert("Error: " + e);
+    xhr.onerror = (e) => showAlert("Error: " + JSON.stringify(e));
     xhr.send();
 }
 
 /// UTILS ///
 
-function showModal() {
-    document.getElementById("modal").classList.add("visible");
-    uploadFiles = [];
-}
-function hideModal() {
-    document.getElementById("modal").classList.remove("visible");
+function clearModal() {
     document.querySelector(".modal textarea").textContent = "";
     document.querySelector(".modal form").reset();
     document.querySelector(".modal .add-files").innerHTML = "";
     uploadFiles = [];
 }
+function showModal() {
+    document.getElementById("modal").classList.add("visible");
+    clearModal();
 
-function showAlert(text) {
+    setTimeout(() => {
+        document.querySelector(".modal textarea").focus();
+    }, 100);
+}
+function hideModal() {
+    document.getElementById("modal").classList.remove("visible");
+    clearModal();
+}
+
+function showAlert(text, type = 'error') {
     let alert = document.querySelector(".alert");
     alert.firstElementChild.textContent = text;
     alert.classList.add("visible");
+    if (type === 'error') {
+        alert.classList.remove('success');
+        alert.classList.add('error');
+    } else if (type === 'success') {
+        alert.classList.remove('error');
+        alert.classList.add('success');
+    }
     
     setTimeout(() => alert.classList.remove("visible"), 3000);
 }
 
+function displayNotes(notes) {
+    let container = document.querySelector("section");
+    container.innerHTML = "";
+    for (const note of notes) {
+        container.appendChild(NoteItem(note));                    
+    }
+}
+
 function copyClipboard(id) {
     navigator.clipboard.writeText(notes.find(n => n.id == id).text);
+    showAlert("Copié", 'success')
+}
+
+/// SEARCH ///
+
+function search() {
+    let token = document.getElementById('search').value;
+    let regex = new RegExp(token, 'i');
+    let filtered = notes.filter(n => 
+        n.text != null && regex.test(n.text)
+        || n.files.some(f => regex.test(f.name))
+    );
+
+    filtered.sort((a, b) => new Date(b.creation_date) - new Date(a.creation_date));
+    displayNotes(filtered);
+}
+
+/// DRAG DROP ///
+
+function modalDragEnter() {
+    document.getElementById('dropzone-modal').classList.add('visible');
+}
+function modalDragLeave() {
+    document.getElementById('dropzone-modal').classList.remove('visible');
+}
+
+function dropFileModal(ev) {
+    ev.preventDefault(true);
+    ev.stopPropagation();
+
+
+
+    updateFileUploadList();
 }
 
 /// FORM UPLOAD ///
@@ -174,17 +244,10 @@ function openFileInput() {
 }
 function takeFilesFromInput() {
     let input = document.querySelector(".modal input[type=file]");
-    for (let i = 0; i < input.files.length; i++) {
-        uploadFiles.push(input.files[i]);
+    for (const element of input.files) {
+        uploadFiles.push(element);
     }
     input.value = null;
-
-    updateFileUploadList();
-}
-function dropFile(ev) {
-    ev.preventDefault(true);
-
-
 
     updateFileUploadList();
 }
@@ -205,17 +268,13 @@ function sendForm() {
         return;
     }
 
-    console.log("Send: ", text, uploadFiles);
-
     const formData = new FormData();
     if (text != "") {
         formData.append("text", text);
     }
-    for (let i = 0; i < uploadFiles.length; i++) {
-        formData.append("files", uploadFiles[i]);
+    for (const element of uploadFiles) {
+        formData.append("files", element);
     }
-
-    console.log(formData);
 
     postNote(formData, (resp) => {
         hideModal();
@@ -223,5 +282,6 @@ function sendForm() {
         let n = JSON.parse(resp);
         notes.unshift(n);
         cont.insertBefore(NoteItem(n), cont.firstChild);
+        showAlert("Note créée", 'success');
     });
 }

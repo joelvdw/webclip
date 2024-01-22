@@ -61,7 +61,6 @@ def copy_files(files: list[UploadFile]) -> List[str]:
     for f in files:
         name = str(uuid.uuid4())
         path = upload_path.joinpath("./" + name)
-        print(f, name, path)
         try:
             with path.open("wb+") as buffer:
                 while content := f.file.read(2048):
@@ -78,8 +77,7 @@ def copy_files(files: list[UploadFile]) -> List[str]:
 
 
 @app.post("/notes", status_code=201)
-def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] = None, text: Optional[str] = Form(None)):
-    print(text, files)
+def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] = [], text: Optional[str] = Form(None)):
     if not text and not files:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return "At least a text or a file must be present"
@@ -114,7 +112,7 @@ def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] =
 
 
 @app.get("/notes/{id}")
-def get_note(id: int, response: Response):
+def get_note(id: str, response: Response):
     note = dao.get_note(id)
     if note is None:
         response.status_code = status.HTTP_404_NOT_FOUND
@@ -124,7 +122,7 @@ def get_note(id: int, response: Response):
 
 
 @app.delete("/notes/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_note(id: int, response: Response):
+def delete_note(id: str, response: Response):
     res = dao.delete_note(id)
     if not res:
         response.status_code = status.HTTP_404_NOT_FOUND

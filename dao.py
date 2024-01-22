@@ -27,12 +27,13 @@ class ClipNote(BaseModel):
     text: str | None
     files: List[ClipFile]
 
-    def from_db_obj(db_obj: object) -> ClipNote:
+    @staticmethod
+    def from_db_obj(db_obj) -> ClipNote:
         return ClipNote(
-            id=str(db_obj._id),
-            creation_date=db_obj.creation_date,
-            text=db_obj.text,
-            files=[ClipFile(**f) for f in db_obj.files]
+            id=str(db_obj['_id']),
+            creation_date=db_obj['creation_date'],
+            text=db_obj['text'],
+            files=[ClipFile(**f) for f in db_obj['files']]
         )
 
 db_collec = connect_db()
@@ -51,12 +52,12 @@ def add_note(note_dto: ClipNoteDTO) -> ClipNote:
         text = note_dto.text,
         files = note_dto.files
     )
-    res = db_collec.insert_one(note.model_dump(exclude=['id']))
+    res = db_collec.insert_one(note.model_dump(exclude=set('id')))
     note.id = str(res.inserted_id)
     return note
 
 # Delete a note
 # Return the note if found, None otherwise
-def delete_note(id: int) -> ClipNote | None:
+def delete_note(id: str) -> ClipNote | None:
     res = db_collec.find_one_and_delete({"_id": ObjectId(id)})
     return ClipNote.from_db_obj(res)
