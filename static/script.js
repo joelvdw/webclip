@@ -33,8 +33,8 @@ function iconFromType(type) {
     }
 }
 function formatDate(date) {
-    let options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleString('fr-CH', options);
+    let options = { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+    return new Date(date).toLocaleString('fr-CH', options);
 }
 function formatSize(size) {
     if (size < 1024) {
