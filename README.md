@@ -24,3 +24,7 @@ uvicorn main:app
 
 # TODO add favicon
 # TODO use env var for mongo hots and port, and use_user_header
+
+  - "traefik.http.middlewares.my-auth.basicauth.headerField=X-WebAuth-User"
+
+# TODO store mongo data and uploads in /data

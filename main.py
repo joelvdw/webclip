@@ -12,9 +12,11 @@ import dao
 from dao import ClipNoteDTO, ClipFile
 
 USER_HEADER = 'X-WebAuth-User'
+UPLOAD_DIR = "/uploads"
+HOST = "https://clip.iridax.ch"
 
 origins = [
-    "https://clip.iridax.ch",
+    HOST,
     "http://localhost:8000",
 ]
 app = FastAPI()
@@ -29,7 +31,7 @@ templates = Jinja2Templates("templates")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-upload_path = Path("./uploads")
+upload_path = Path(UPLOAD_DIR)
 if not upload_path.exists():
     os.mkdir(upload_path)
 app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
