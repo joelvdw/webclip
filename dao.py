@@ -1,15 +1,26 @@
 from __future__ import annotations
 from typing import List
 from datetime import datetime
+from hashlib import sha1
 
 from pymongo import MongoClient, DESCENDING
 from bson.objectid import ObjectId
 from pydantic import BaseModel, ValidationError
+from pymongo.database import Database
+from pymongo.collection import Collection
 
-def connect_db(): 
+# DB access
+
+def connect_db() -> Database: 
    CONNECTION_STRING = "mongodb://localhost:27017"
    client = MongoClient(CONNECTION_STRING)
-   return client['clip']['notes']
+   return client['clip']
+
+db = connect_db()
+
+def get_collec(user: str) -> Collection:
+    global db
+    return db[sha1(user.encode()).hexdigest()]
 
 class ClipFile(BaseModel):
     name: str
@@ -36,28 +47,26 @@ class ClipNote(BaseModel):
             files=[ClipFile(**f) for f in db_obj['files']]
         )
 
-db_collec = connect_db()
+def get_notes(user: str) -> List[ClipNote]:
+    return [ClipNote.from_db_obj(n) for n in get_collec(user).find().sort('creation_date', DESCENDING)]
 
-def get_notes() -> List[ClipNote]:
-    return [ClipNote.from_db_obj(n) for n in db_collec.find().sort('creation_date', DESCENDING)]
-
-def get_note(id: str) -> ClipNote | None:
-    n = db_collec.find_one({"_id": ObjectId(id)})
+def get_note(id: str, user: str) -> ClipNote | None:
+    n = get_collec(user).find_one({"_id": ObjectId(id)})
     return ClipNote.from_db_obj(n)
 
-def add_note(note_dto: ClipNoteDTO) -> ClipNote:
+def add_note(note_dto: ClipNoteDTO, user: str) -> ClipNote:
     note = ClipNote(
         id = None,
         creation_date = datetime.now(),
         text = note_dto.text,
         files = note_dto.files
     )
-    res = db_collec.insert_one(note.model_dump(exclude=set('id')))
+    res = get_collec(user).insert_one(note.model_dump(exclude=set('id')))
     note.id = str(res.inserted_id)
     return note
 
 # Delete a note
 # Return the note if found, None otherwise
-def delete_note(id: str) -> ClipNote | None:
-    res = db_collec.find_one_and_delete({"_id": ObjectId(id)})
+def delete_note(id: str, user: str) -> ClipNote | None:
+    res = get_collec(user).find_one_and_delete({"_id": ObjectId(id)})
     return ClipNote.from_db_obj(res)

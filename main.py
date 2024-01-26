@@ -11,6 +11,8 @@ from copy import copy
 import dao
 from dao import ClipNoteDTO, ClipFile
 
+USER_HEADER = 'X-WebAuth-User'
+
 origins = [
     "https://clip.iridax.ch",
     "http://localhost:8000",
@@ -32,17 +34,24 @@ if not upload_path.exists():
     os.mkdir(upload_path)
 app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
 
+# Get the user in the request headers, or return a default user if not present
+def get_user(request: Request) -> str:
+    return request.headers.get(USER_HEADER) or '__default_user__'
+
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
     return templates.TemplateResponse(
-        request=request, name="index.html", context={"title": "Iridax Clipboard"}
+        request=request, name="index.html", context={
+            'title': "Iridax Clipboard",
+            'user': get_user(request)
+        }
     )
 
 
 @app.get("/notes")
-def get_notes():
-    return dao.get_notes()
+def get_notes(request: Request):
+    return dao.get_notes(get_user(request))
 
 def remove_upload(name: str):
     try:
@@ -78,7 +87,12 @@ def copy_files(files: list[UploadFile]) -> List[str]:
 
 
 @app.post("/notes", status_code=201)
-def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] = copy([]), text: Optional[str] = Form(None)):
+def post_note(
+    request: Request,
+    response: Response,
+    files: Annotated[List[UploadFile], [File()]] = copy([]),
+    text: Optional[str] = Form(None)
+):
     if not text and not files:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return "At least a text or a file must be present"
@@ -103,7 +117,7 @@ def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] =
         ) for (uf, name) in zip(files, saved_files)]
     )
     
-    note = dao.add_note(dto)
+    note = dao.add_note(dto, get_user(request))
     if note is None:
         remove_uploads(saved_files)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -112,9 +126,9 @@ def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] =
         return note
 
 
-@app.get("/notes/{id}")
-def get_note(id: str, response: Response):
-    note = dao.get_note(id)
+@app.get("/notes/{id_note}")
+def get_note(id_note: str, request: Request, response: Response):
+    note = dao.get_note(id_note, get_user(request))
     if note is None:
         response.status_code = status.HTTP_404_NOT_FOUND
         return "Note not found"
@@ -122,9 +136,9 @@ def get_note(id: str, response: Response):
         return note
 
 
-@app.delete("/notes/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_note(id: str, response: Response):
-    res = dao.delete_note(id)
+@app.delete("/notes/{id_note}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_note(id_note: str, request: Request, response: Response):
+    res = dao.delete_note(id_note, get_user(request))
     if not res:
         response.status_code = status.HTTP_404_NOT_FOUND
         return "Note not found"

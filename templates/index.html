@@ -13,8 +13,10 @@
         <h2 class="title">{{ title }}</h2>
         <div class="mid"></div>
         <div class="user">
-            <span class="username">Joel</span>
-            <span class="material-symbols-outlined">person</span>
+            {% if user != '__default_user__' %}
+                <span class="username">{{ user }}</span>
+                <span class="material-symbols-outlined">person</span>
+            {% endif %}
         </div>
     </nav>
     <div class="content">

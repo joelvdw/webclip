@@ -23,3 +23,4 @@ uvicorn main:app
 (Use `--root-path PATH` if the website is not at the domain root)
 
 # TODO add favicon
+# TODO use env var for mongo hots and port, and use_user_header
