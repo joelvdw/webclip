@@ -170,7 +170,8 @@ button.red {
 .content {
     display: flex;
     flex-flow: column;
-    height: calc(100% - 3.2rem - 24px);
+    height: calc(100% - 3em - 24px);
+    position: relative;
 }
 .content .row {
     width: 100%;
@@ -367,7 +368,7 @@ footer {
     z-index: 10;
 
     &.visible {
-        opacity: 0.9;
+        opacity: 0.7;
     }
 }
 .alert.error {
@@ -394,20 +395,23 @@ footer {
         display: flex;
     }
 }
-.modal .dropzone {
+.dropzone {
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    width: 100%;
-    height: 100%;
+    bottom: 0;
     border: 3px dashed var(--main-color);
     background-color: rgba(250, 250, 250, 0.5);
     display: none;
     z-index: 15;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.5em;
+    color: #777;
 }
-.modal .dropzone.visible {
-    display: block;
+.dropzone.visible {
+    display: flex;
 }
 .modal .modal-content {
     display: flex;
@@ -419,6 +423,7 @@ footer {
     margin: 0 5%;
     background-color: #fefefe;
     padding: 1rem;
+    position: relative;
 }
 .modal .buttons, .modal .inputs {
     width: calc(100% - 10px);

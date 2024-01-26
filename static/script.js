@@ -122,7 +122,15 @@ function getNotes() {
     }
     xhr.send();
 }
-function postNote(formData, onSuccess) {
+function postNote(text, uploadFiles, onSuccess) {
+    const formData = new FormData();
+    if ((text ?? '') != '') {
+        formData.append("text", text);
+    }
+    for (const element of uploadFiles) {
+        formData.append("files", element);
+    }
+
     const xhr = new XMLHttpRequest();
     xhr.open("POST", "/notes", true);
     xhr.onreadystatechange = function () {
@@ -229,11 +237,69 @@ function modalDragLeave() {
 function dropFileModal(ev) {
     ev.preventDefault(true);
     ev.stopPropagation();
+    document.getElementById('dropzone-modal').classList.remove('visible');
 
-
+    if (ev.dataTransfer.items) {
+        [...ev.dataTransfer.items].forEach((item, _i) => {
+            if (item.kind === "file") {
+                if (item.webkitGetAsEntry().isFile) {
+                    const file = item.getAsFile();
+                    uploadFiles.push(file);
+                } else {
+                    showAlert("Les dossiers ne sont pas supportés");
+                }
+            }
+        });
+    } else {
+        [...ev.dataTransfer.files].forEach((file, _i) => {
+            uploadFiles.push(file);
+        });
+    }
 
     updateFileUploadList();
 }
+
+function fullDragEnter() {
+    if (!document.getElementById('modal').classList.contains('visible')) {
+        document.getElementById('dropzone-full').classList.add('visible');
+    }
+}
+function fullDragLeave() {
+    document.getElementById('dropzone-full').classList.remove('visible');
+}
+
+function dropFileFull(ev) {
+    ev.preventDefault(true);
+    ev.stopPropagation();
+    document.getElementById('dropzone-full').classList.remove('visible');
+
+    let files = [];
+
+    if (ev.dataTransfer.items) {
+        [...ev.dataTransfer.items].forEach((item, _i) => {
+            if (item.kind === "file") {
+                if (item.webkitGetAsEntry().isFile) {
+                    const file = item.getAsFile();
+                    files.push(file);
+                } else {
+                    showAlert("Les dossiers ne sont pas supportés");
+                }
+            }
+        });
+    } else {
+        [...ev.dataTransfer.files].forEach((file, _i) => {
+            files.push(file);
+        });
+    }
+
+    if (files.length != 0) {
+        postNote(undefined, files, onNoteCreated);
+    }
+}
+
+function dragOverHandler(ev) {
+    ev.preventDefault();
+} 
 
 /// FORM UPLOAD ///
 
@@ -259,7 +325,7 @@ function updateFileUploadList() {
     let container = document.querySelector(".modal .add-files");
 
     container.innerHTML = "";
-    van.add(container, uploadFiles.map(f => { console.log(f); return FileUploadItem(f)}));
+    van.add(container, uploadFiles.map(f => FileUploadItem(f)));
 }
 function sendForm() {
     let text = document.querySelector(".modal form textarea").value;
@@ -268,20 +334,14 @@ function sendForm() {
         return;
     }
 
-    const formData = new FormData();
-    if (text != "") {
-        formData.append("text", text);
-    }
-    for (const element of uploadFiles) {
-        formData.append("files", element);
-    }
+    postNote(text, uploadFiles, onNoteCreated);
+}
 
-    postNote(formData, (resp) => {
-        hideModal();
-        let cont = document.querySelector("section");
-        let n = JSON.parse(resp);
-        notes.unshift(n);
-        cont.insertBefore(NoteItem(n), cont.firstChild);
-        showAlert("Note créée", 'success');
-    });
+function onNoteCreated(note) {
+    hideModal();
+    let cont = document.querySelector("section");
+    let n = JSON.parse(note);
+    notes.unshift(n);
+    cont.insertBefore(NoteItem(n), cont.firstChild);
+    showAlert("Note créée", 'success');
 }

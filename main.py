@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import uuid, os
+from copy import copy
 
 import dao
 from dao import ClipNoteDTO, ClipFile
@@ -77,7 +78,7 @@ def copy_files(files: list[UploadFile]) -> List[str]:
 
 
 @app.post("/notes", status_code=201)
-def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] = [], text: Optional[str] = Form(None)):
+def post_note(response: Response, files: Annotated[List[UploadFile], [File()]] = copy([]), text: Optional[str] = Form(None)):
     if not text and not files:
         response.status_code = status.HTTP_400_BAD_REQUEST
         return "At least a text or a file must be present"

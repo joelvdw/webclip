@@ -5,7 +5,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
     <link href="{{ url_for('static', path='/styles.css') }}" rel="stylesheet" type="text/css">
 </head>
-<body onload="getNotes()">
+<body onload="getNotes()" ondragenter="fullDragEnter()">
+    <div class="dropzone" id="dropzone-full" ondragleave="fullDragLeave();" ondragover="dragOverHandler(event);" ondrop="dropFileFull(event);">
+        Déposer les fichiers ici pour les envoyer
+    </div>
     <nav>
         <h2 class="title">{{ title }}</h2>
         <div class="mid"></div>
@@ -35,7 +38,9 @@
     </div>
     <div class="modal" id="modal">
         <form class="modal-content" ondragenter="modalDragEnter()">
-            <div class="dropzone" id="dropzone-modal" ondragleave="modalDragLeave()"></div>
+            <div class="dropzone" id="dropzone-modal" ondragleave="modalDragLeave();" ondragover="dragOverHandler(event);" ondrop="dropFileModal(event);">
+                Déposer les fichiers ici
+            </div>
             <input type="file" name="files" multiple="true" onchange="takeFilesFromInput()">
             <div class="inputs">
                 <textarea></textarea>
