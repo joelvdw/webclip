@@ -7,17 +7,21 @@ from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import uuid, os
 from copy import copy
+from os import environ as env
 
 import dao
 from dao import ClipNoteDTO, ClipFile
 
-USER_HEADER = 'X-WebAuth-User'
-UPLOAD_DIR = "/uploads"
-HOST = "https://clip.iridax.ch"
+USE_USER_HEADER = (env.get('CLIP_USE_USER_HEADER') or 'no').lower() == 'yes'
+USER_HEADER = env.get('CLIP_USER_HEADER') or 'X-WebAuth-User'
+UPLOAD_DIR = env.get('CLIP_UPLOAD_DIR') or "/uploads"
+HOST = env.get('CLIP_HOST') or ""
+PORT = env.get('CLIP_PORT') or 8000
 
 origins = [
-    HOST,
-    "http://localhost:8000",
+    f"http://{HOST}",
+    f"https://{HOST}",
+    f"http://localhost:{PORT}",
 ]
 app = FastAPI()
 app.add_middleware(
@@ -38,7 +42,10 @@ app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
 
 # Get the user in the request headers, or return a default user if not present
 def get_user(request: Request) -> str:
-    return request.headers.get(USER_HEADER) or '__default_user__'
+    if USE_USER_HEADER and USER_HEADER in request.headers.keys():
+        return request.headers.get(USER_HEADER)
+    else:
+        return '__default_user__'
 
 
 @app.get("/", response_class=HTMLResponse)

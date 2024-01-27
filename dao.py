@@ -2,25 +2,39 @@ from __future__ import annotations
 from typing import List
 from datetime import datetime
 from hashlib import sha1
+from os import environ as env
 
 from pymongo import MongoClient, DESCENDING
 from bson.objectid import ObjectId
 from pydantic import BaseModel, ValidationError
 from pymongo.database import Database
 from pymongo.collection import Collection
+from pymongo.errors import ServerSelectionTimeoutError
 
-# DB access
+## DB access
+MONGO_HOST = env.get('CLIP_MONGO_HOST') or "localhost"
+MONGO_PORT = env.get('CLIP_MONGO_PORT') or 27017
 
 def connect_db() -> Database: 
-   CONNECTION_STRING = "mongodb://localhost:27017"
-   client = MongoClient(CONNECTION_STRING)
-   return client['clip']
+    CONNECTION_STRING = f"mongodb://{MONGO_HOST}:{MONGO_PORT}"
+    print("Connecting to mongo server:", CONNECTION_STRING)
+    client = MongoClient(CONNECTION_STRING, serverSelectionTimeoutMS=10000)
+    try:
+        print("Mongo server: ", client.server_info())
+    except ServerSelectionTimeoutError as e:
+        print("Mongo server error", e)
+        exit(1)
+    return client['clip']
 
 db = connect_db()
+print("here")
 
+# Get the collection of the given user
 def get_collec(user: str) -> Collection:
     global db
     return db[sha1(user.encode()).hexdigest()]
+
+## Models
 
 class ClipFile(BaseModel):
     name: str
@@ -46,6 +60,8 @@ class ClipNote(BaseModel):
             text=db_obj['text'],
             files=[ClipFile(**f) for f in db_obj['files']]
         )
+
+## DAO methods
 
 def get_notes(user: str) -> List[ClipNote]:
     return [ClipNote.from_db_obj(n) for n in get_collec(user).find().sort('creation_date', DESCENDING)]
