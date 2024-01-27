@@ -13,4 +13,4 @@ EXPOSE ${CLIP_PORT}
 
 ENV CLIP_PORT=${CLIP_PORT}
 
-CMD python -m uvicorn main:app --host 0.0.0.0 --port "${CLIP_PORT}"
+CMD python -m uvicorn main:app --host 0.0.0.0 --port "${CLIP_PORT}" --proxy-headers
