@@ -17,6 +17,7 @@ USER_HEADER = env.get('CLIP_USER_HEADER') or 'X-WebAuth-User'
 UPLOAD_DIR = env.get('CLIP_UPLOAD_DIR') or "/uploads"
 HOST = env.get('CLIP_HOST') or ""
 PORT = env.get('CLIP_PORT') or 8000
+TITLE = env.get('CLIP_TITLE') or "Webclip"
 
 origins = [
     f"http://{HOST}",
@@ -52,7 +53,7 @@ def get_user(request: Request) -> str:
 def index(request: Request):
     return templates.TemplateResponse(
         request=request, name="index.html", context={
-            'title': "Iridax Clipboard",
+            'title': TITLE,
             'user': get_user(request)
         }
     )

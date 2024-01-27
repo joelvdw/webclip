@@ -1,15 +1,7 @@
 FROM python:3.10-bullseye
 
-ARG CLIP_UID=1001
-ARG CLIP_USE_USER_HEADER="yes"
-ARG CLIP_USER_HEADER="X-WebAuth-User"
-ARG CLIP_UPLOAD_DIR="/uploads"
-ARG CLIP_HOST="clip.iridax.ch"
 ARG CLIP_PORT=8000
-ARG CLIP_MONGO_HOST="localhost"
-ARG CLIP_MONGO_PORT=27017
-
-RUN mkdir -p ${CLIP_UPLOAD_DIR} && chmod 700 ${CLIP_UPLOAD_DIR} && chown ${CLIP_UID}:${CLIP_UID} ${CLIP_UPLOAD_DIR}
+ARG CLIP_ROOT_PATH=/
 
 COPY ./requirements.txt /app/
 WORKDIR /app
@@ -18,16 +10,8 @@ RUN pip3 install -r requirements.txt
 
 COPY . /app/
 
-USER ${CLIP_UID}:${CLIP_UID}
-
 EXPOSE ${CLIP_PORT}
 
-ENV CLIP_USE_USER_HEADER=${CLIP_USE_USER_HEADER}
-ENV CLIP_USER_HEADER=${CLIP_USER_HEADER}
-ENV CLIP_UPLOAD_DIR=${CLIP_UPLOAD_DIR}
-ENV CLIP_HOST=${CLIP_HOST}
 ENV CLIP_PORT=${CLIP_PORT}
-ENV CLIP_MONGO_HOST=${CLIP_MONGO_HOST}
-ENV CLIP_MONGO_PORT=${CLIP_MONGO_PORT}
 
-CMD python -m uvicorn main:app --host 0.0.0.0 --port "${CLIP_PORT}"
+CMD python -m uvicorn main:app --host 0.0.0.0 --port "${CLIP_PORT}" --root-path ${CLIP_ROOT_PATH}
