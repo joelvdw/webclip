@@ -14,7 +14,7 @@ import dao
 from dao import ClipNoteDTO, ClipFile
 
 USE_USER_HEADER = (env.get('CLIP_USE_USER_HEADER') or 'no').lower() == 'yes'
-USER_HEADER = env.get('CLIP_USER_HEADER') or 'X-WebAuth-User'
+USER_HEADER = (env.get('CLIP_USER_HEADER') or 'X-WebAuth-User').lower()
 UPLOAD_DIR = env.get('CLIP_UPLOAD_DIR') or "/uploads"
 HOST = env.get('CLIP_HOST') or ""
 PORT = env.get('CLIP_PORT') or 8000
