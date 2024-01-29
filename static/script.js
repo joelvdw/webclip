@@ -97,8 +97,13 @@ document.onkeydown = function (e) {
         e.preventDefault();
         showModal();
     }
+    if (e.key == 's' && !document.getElementById('modal').classList.contains('visible')) {
+        e.preventDefault();
+        let input = document.getElementById('search').focus();
+    }
     if (e.key == "Escape" && document.getElementById('modal').classList.contains('visible')) {
-        document.getElementById('modal').classList.remove('visible');
+        e.preventDefault();
+        hideModal();
     }
 };
 
