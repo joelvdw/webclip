@@ -97,6 +97,9 @@ document.onkeydown = function (e) {
         e.preventDefault();
         showModal();
     }
+    if (e.key == "Escape" && document.getElementById('modal').classList.contains('visible')) {
+        document.getElementById('modal').classList.remove('visible');
+    }
 };
 
 
