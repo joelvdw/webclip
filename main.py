@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, Response, status, UploadFile, File, Form
 from fastapi.templating import Jinja2Templates
 from jinja2 import pass_context
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
 import uuid, os
@@ -40,8 +40,8 @@ def urlx_for(context: dict, name: str, **path_params) -> str:
     request: Request = context['request']
     http_url = request.url_for(name, **path_params)
     if scheme := request.headers.get('x-forwarded-proto'):
-        return http_url.replace(scheme=scheme)
-    return http_url
+        return str(http_url.replace(scheme=scheme))
+    return str(http_url)
 
 templates = Jinja2Templates("templates")
 templates.env.globals['url_for'] = urlx_for
@@ -56,7 +56,7 @@ app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
 # Get the user in the request headers, or return a default user if not present
 def get_user(request: Request) -> str:
     if USE_USER_HEADER and USER_HEADER in request.headers.keys():
-        return request.headers.get(USER_HEADER)
+        return request.headers.get(USER_HEADER) or '__default_user__'
     else:
         return '__default_user__'
 
@@ -69,6 +69,10 @@ def index(request: Request):
             'user': get_user(request)
         }
     )
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("./static/favicon.ico")
 
 
 @app.get("/notes")
