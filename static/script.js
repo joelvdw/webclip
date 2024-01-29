@@ -99,7 +99,7 @@ document.onkeydown = function (e) {
     }
     if (e.key == 's' && !document.getElementById('modal').classList.contains('visible')) {
         e.preventDefault();
-        let input = document.getElementById('search').focus();
+        document.getElementById('search').focus();
     }
     if (e.key == "Escape" && document.getElementById('modal').classList.contains('visible')) {
         e.preventDefault();
