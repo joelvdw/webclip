@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  clip:
+    build:
+      context: .
+      args:
+        CLIP_PORT: 8000
+    image: clip
+    container_name: clip-backend
+    restart: unless-stopped
+    environment:
+      - CLIP_MONGO_HOST=clip-db
+      - CLIP_MONGO_PORT=27017
+    ports:
+      - 8000:8000
+    volumes:
+      - clipuploads:/uploads
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:6
+    container_name: clip-db
+    restart: unless-stopped
+    volumes:
+      - clipmongo:/data
+
+volumes:
+  clipuploads:
+  clipmongo:
