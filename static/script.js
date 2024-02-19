@@ -101,6 +101,12 @@ document.onkeydown = function (e) {
         e.preventDefault();
         document.getElementById('search').focus();
     }
+    if (e.key == 'r'
+            && !document.getElementById('modal').classList.contains('visible')
+            && document.getElementById('search') !== document.activeElement) {
+        e.preventDefault();
+        location.reload();
+    }
     if (e.key == "Escape" && document.getElementById('modal').classList.contains('visible')) {
         e.preventDefault();
         hideModal();
