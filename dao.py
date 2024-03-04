@@ -20,14 +20,13 @@ def connect_db() -> Database:
     print("Connecting to mongo server:", CONNECTION_STRING)
     client = MongoClient(CONNECTION_STRING, serverSelectionTimeoutMS=10000)
     try:
-        print("Mongo server: ", client.server_info())
+        print("Mongo server: v", client.server_info()['version'], sep='')
     except ServerSelectionTimeoutError as e:
         print("Mongo server error", e)
         exit(1)
     return client['clip']
 
 db = connect_db()
-print("here")
 
 # Get the collection of the given user
 def get_collec(user: str) -> Collection:

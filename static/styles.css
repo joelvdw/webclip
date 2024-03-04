@@ -252,6 +252,10 @@ article .text p {
     margin: 0.25rem;
     padding: 0.75rem;
     border-radius: 3px;
+    overflow-wrap: break-word;
+    text-wrap: pretty;
+    word-break: break-all;
+    white-space: pre-line;
 }
 
 article div span {
