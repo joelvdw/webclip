@@ -19,6 +19,7 @@ UPLOAD_DIR = env.get('CLIP_UPLOAD_DIR') or "/uploads"
 HOST = env.get('CLIP_HOST') or ""
 PORT = env.get('CLIP_PORT') or 8000
 TITLE = env.get('CLIP_TITLE') or "Webclip"
+STATIC_UPLOAD_URL = "/uploads"
 
 origins = [
     f"http://{HOST}",
@@ -51,7 +52,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 upload_path = Path(UPLOAD_DIR)
 if not upload_path.exists():
     os.mkdir(upload_path)
-app.mount("/uploads", StaticFiles(directory=upload_path), name="uploads")
+app.mount(STATIC_UPLOAD_URL, StaticFiles(directory=upload_path), name="uploads")
 
 # Get the user in the request headers, or return a default user if not present
 def get_user(request: Request) -> str:
@@ -77,7 +78,12 @@ async def favicon():
 
 @app.get("/notes")
 def get_notes(request: Request):
-    return dao.get_notes(get_user(request))
+    notes = dao.get_notes(get_user(request))
+    for n in notes:
+        for f in n.files:
+            f.filepath = STATIC_UPLOAD_URL + "/" + f.filepath
+
+    return notes
 
 def remove_upload(name: str):
     try:
@@ -137,7 +143,7 @@ def post_note(
         text=text,
         files=[ClipFile(
             name=uf.filename if uf.filename else "File",
-            filepath="/uploads/" + name,
+            filepath=name,
             filetype=uf.content_type if uf.content_type else "application/octet-stream",
             size=uf.size if uf.size is not None else -1
         ) for (uf, name) in zip(files, saved_files)]
@@ -149,6 +155,8 @@ def post_note(
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return "Failed to insert note in database"
     else:
+        for f in note.files:
+            f.filepath = STATIC_UPLOAD_URL + "/" + f.filepath
         return note
 
 
@@ -168,3 +176,6 @@ def delete_note(id_note: str, request: Request, response: Response):
     if not res:
         response.status_code = status.HTTP_404_NOT_FOUND
         return "Note not found"
+    else:
+        for f in res.files:
+            remove_upload(f.filepath)
