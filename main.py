@@ -14,7 +14,7 @@ from dao import ClipNoteDTO, ClipFile, DAO
 
 USE_USER_HEADER = (env.get('CLIP_USE_USER_HEADER') or 'no').lower() == 'yes'
 USER_HEADER = (env.get('CLIP_USER_HEADER') or 'X-WebAuth-User').lower()
-UPLOAD_DIR = env.get('CLIP_UPLOAD_DIR') or "/uploads"
+UPLOAD_DIR = env.get('CLIP_UPLOAD_DIR') or "./uploads"
 HOST = env.get('CLIP_HOST') or ""
 PORT = env.get('CLIP_PORT') or 8000
 TITLE = env.get('CLIP_TITLE') or "Webclip"
@@ -146,7 +146,6 @@ def post_note(
     
     dto = ClipNoteDTO(
         text=text,
-        pinned=False,
         files=[ClipFile(
             name=uf.filename if uf.filename else "File",
             filepath=name,
@@ -173,7 +172,6 @@ def put_note(
     added_files: Annotated[List[UploadFile], [File()]] = copy([]),
     removed_files: List[str] = copy([]),
     text: Optional[str] = Form(None),
-    pinned: Optional[bool] = Form(None)
 ):
     note = dao.get_note(id_note, get_user(request))
     if note is None:
@@ -201,7 +199,6 @@ def put_note(
     
     dto = ClipNoteDTO(
         text=text,
-        pinned=pinned,
         files=new_files
     )
     
@@ -215,6 +212,20 @@ def put_note(
             f.filepath = STATIC_UPLOAD_URL + "/" + f.filepath
         return note
 
+@app.put("/notes/{id_note}/pin")
+def pin_note(id_note: str, request: Request, response: Response):
+    note = dao.edit_pin_note(id_note, True, get_user(request))
+    if note is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return NOTE_NOT_FOUND
+    return note
+@app.put("/notes/{id_note}/unpin")
+def unpin_note(id_note: str, request: Request, response: Response):
+    note = dao.edit_pin_note(id_note, False, get_user(request))
+    if note is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return NOTE_NOT_FOUND
+    return note
 
 @app.get("/notes/{id_note}")
 def get_note(id_note: str, request: Request, response: Response):

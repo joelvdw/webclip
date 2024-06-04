@@ -25,7 +25,6 @@ class ClipFile(BaseModel):
 
 class ClipNoteDTO(BaseModel):
     text: str | None
-    pinned: bool | None
     files: List[ClipFile] | None
 
 class ClipNote(BaseModel):
@@ -68,7 +67,7 @@ class DAO:
             return self.db[sha1(user.encode()).hexdigest()]
 
     def get_notes(self, user: str) -> List[ClipNote]:
-        return [ClipNote.from_db_obj(n) for n in self.get_collec(user).find().sort('creation_date', DESCENDING)]
+        return [ClipNote.from_db_obj(n) for n in self.get_collec(user).find().sort([('pinned', DESCENDING), ('creation_date', DESCENDING)])]
 
     def get_note(self, id_note: str, user: str) -> ClipNote | None:
         n = self.get_collec(user).find_one({"_id": ObjectId(id_note)})
@@ -88,19 +87,23 @@ class DAO:
 
     def edit_note(self, id_note: str, note_dto: ClipNoteDTO, user: str) -> ClipNote | None:
         note = self.get_note(id_note, user)
-        print(note)
         if note is None:
             return None
         
         if note_dto.text is not None:
             note.text = note_dto.text
-        if note_dto.pinned is not None:
-            note.pinned = note_dto.pinned
         if note_dto.files is not None:
             note.files = note_dto.files
 
         self.get_collec(user).replace_one({"_id": ObjectId(id_note)}, note.model_dump(exclude=set('id')))
         return note
+    
+    def edit_pin_note(self, id_note: str, pin: bool, user: str) -> ClipNote | None:
+        res = self.get_collec(user).update_one({"_id": ObjectId(id_note)}, {"$set": {"pinned": pin}})
+        if res.matched_count == 0:
+            return None
+
+        return self.get_note(id_note, user)
 
     # Delete a note
     # Return the note if found, None otherwise

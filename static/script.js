@@ -60,7 +60,7 @@ function formatFilename(name, max = 30) {
 const FileUploadItem = (f) => div({class: "file"}, [
     span({class: "file-icon material-symbols-outlined"}, iconFromType(f.type)),
     p(formatFilename(f.name, 20), span({class: "size"}, formatSize(f.size))),
-    span({class: "material-symbols-outlined", onclick: () => removeUploadFile(f.name)}, "close")
+    span({class: "material-symbols-outlined", role: "button", onclick: () => removeUploadFile(f.name)}, "close")
 ]);
 
 const NoteFileItem = (file) => div({class: "file"},
@@ -80,7 +80,9 @@ const NoteItem = (note) => article({id: "note" + note.id},
     ),
     div({class: "foot"},
         p({class: "date"}, formatDate(note.creation_date)),
-        span({class: "material-symbols-outlined", onclick: () => deleteNote(note.id)}, "delete")
+        span({class: "material-symbols-outlined" + (note.pinned ? " fill" : ""), role: "button", onmouseenter: (ev) => pinEnter(ev, note.id), onmouseleave: (ev) => pinLeave(ev, note.id), onclick: () => invertPinNote(note.id)}, "keep"),
+        span({class: "material-symbols-outlined", role: "button", onclick: () => editNote(note.id)}, "edit"),
+        span({class: "material-symbols-outlined", role: "button", onclick: () => deleteNote(note.id)}, "delete")
     )
 );
 
@@ -105,7 +107,7 @@ document.onkeydown = function (e) {
             && !document.getElementById('modal').classList.contains('visible')
             && document.getElementById('search') !== document.activeElement) {
         e.preventDefault();
-        location.reload();
+        reload();
     }
     if (e.key == "Escape" && document.getElementById('modal').classList.contains('visible')) {
         e.preventDefault();
@@ -136,6 +138,7 @@ function getNotes() {
     }
     xhr.send();
 }
+
 function postNote(text, uploadFiles, onSuccess) {
     const formData = new FormData();
     if ((text ?? '') != '') {
@@ -159,6 +162,29 @@ function postNote(text, uploadFiles, onSuccess) {
     xhr.onerror = (e) => showAlert("Erreur: " + JSON.stringify(e));
     xhr.send(formData);
 }
+
+function invertPinNote(id) {
+    const note = notes.find(n => n.id == id);
+    const action = note.pinned ? "/unpin" : "/pin";
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", "/notes/" + id + action, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200) {
+                // Delete and reinsert node to sort it
+                notes = notes.filter(n => n.id != id);
+                document.getElementById("note" + id).remove();
+                onNoteCreated(xhr.responseText);
+            } else {
+                showAlert("Error: " + xhr.responseText);
+            }
+        }
+    };
+    xhr.onerror = (e) => showAlert("Error: " + JSON.stringify(e));
+    xhr.send();
+}
+
 function deleteNote(id) {
     const xhr = new XMLHttpRequest();
     xhr.open("DELETE", "/notes/" + id, true);
@@ -177,6 +203,10 @@ function deleteNote(id) {
 }
 
 /// UTILS ///
+
+function reload() {
+    getNotes();
+}
 
 function clearModal() {
     document.querySelector(".modal textarea").textContent = "";
@@ -223,6 +253,26 @@ function displayNotes(notes) {
 function copyClipboard(id) {
     navigator.clipboard.writeText(notes.find(n => n.id == id).text);
     showAlert("Copié", 'success')
+}
+
+function pinEnter(ev, id) {
+    if (notes.find(n => n.id == id).pinned === true) {
+        ev.target.classList.remove('fill');
+        ev.target.textContent = 'keep_off';
+    } else {
+        ev.target.classList.add('fill');
+        ev.target.textContent = 'keep';
+    }
+}
+
+function pinLeave(ev, id) {
+    if (notes.find(n => n.id == id).pinned === true) {
+        ev.target.classList.add('fill');
+        ev.target.textContent = 'keep';
+    } else {
+        ev.target.classList.remove('fill');
+        ev.target.textContent = 'keep';
+    }
 }
 
 /// SEARCH ///
@@ -355,7 +405,19 @@ function onNoteCreated(note) {
     hideModal();
     let cont = document.querySelector("section");
     let n = JSON.parse(note);
-    notes.unshift(n);
-    cont.insertBefore(NoteItem(n), cont.firstChild);
+    const firstUnpinned = notes.findIndex(note => note.pinned === false);
+    console.log(notes, firstUnpinned)
+    if (firstUnpinned == -1) {
+        notes.push(n);
+        cont.appendChild(NoteItem(n));
+    } else {
+        // Insert the new note just after
+        cont.insertBefore(NoteItem(n), document.getElementById("note" + notes[firstUnpinned].id));
+        notes = [
+            ...notes.slice(0, firstUnpinned),
+            n,
+            ...notes.slice(firstUnpinned)
+        ];
+    }
     showAlert("Note créée", 'success');
 }
