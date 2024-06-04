@@ -10,8 +10,7 @@ import uuid, os
 from copy import copy
 from os import environ as env
 
-import dao
-from dao import ClipNoteDTO, ClipFile
+from dao import ClipNoteDTO, ClipFile, DAO
 
 USE_USER_HEADER = (env.get('CLIP_USE_USER_HEADER') or 'no').lower() == 'yes'
 USER_HEADER = (env.get('CLIP_USER_HEADER') or 'X-WebAuth-User').lower()
@@ -20,6 +19,8 @@ HOST = env.get('CLIP_HOST') or ""
 PORT = env.get('CLIP_PORT') or 8000
 TITLE = env.get('CLIP_TITLE') or "Webclip"
 STATIC_UPLOAD_URL = "/uploads"
+
+NOTE_NOT_FOUND = "Note not found"
 
 origins = [
     f"http://{HOST}",
@@ -34,6 +35,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+dao = DAO()
+dao.connect_db()
 
 # Improve url_for to support HTTPS behind reverse proxy
 @pass_context
@@ -53,6 +57,7 @@ upload_path = Path(UPLOAD_DIR)
 if not upload_path.exists():
     os.mkdir(upload_path)
 app.mount(STATIC_UPLOAD_URL, StaticFiles(directory=upload_path), name="uploads")
+
 
 # Get the user in the request headers, or return a default user if not present
 def get_user(request: Request) -> str:
@@ -141,6 +146,7 @@ def post_note(
     
     dto = ClipNoteDTO(
         text=text,
+        pinned=False,
         files=[ClipFile(
             name=uf.filename if uf.filename else "File",
             filepath=name,
@@ -159,13 +165,63 @@ def post_note(
             f.filepath = STATIC_UPLOAD_URL + "/" + f.filepath
         return note
 
+@app.put("/notes/{id_note}", status_code=200)
+def put_note(
+    id_note: str,
+    request: Request,
+    response: Response,
+    added_files: Annotated[List[UploadFile], [File()]] = copy([]),
+    removed_files: List[str] = copy([]),
+    text: Optional[str] = Form(None),
+    pinned: Optional[bool] = Form(None)
+):
+    note = dao.get_note(id_note, get_user(request))
+    if note is None:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return NOTE_NOT_FOUND
+
+    if added_files is not None:
+        added_files = []
+    added_files = filter_files(added_files)
+
+    saved_files = copy_files(added_files)
+    if len(saved_files) != len(added_files):
+        remove_uploads(saved_files)
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return "Failed to save files"
+
+    # TODO: front, add msg error if file with same name already exists in note (add or update)
+    new_files = [f for f in note.files if f.name not in removed_files]
+    new_files.extend(ClipFile(
+            name=uf.filename if uf.filename else "File",
+            filepath=name,
+            filetype=uf.content_type if uf.content_type else "application/octet-stream",
+            size=uf.size if uf.size is not None else -1
+        ) for (uf, name) in zip(added_files, saved_files))
+    
+    dto = ClipNoteDTO(
+        text=text,
+        pinned=pinned,
+        files=new_files
+    )
+    
+    note = dao.add_note(dto, get_user(request))
+    if note is None:
+        remove_uploads(saved_files)
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return "Failed to insert note in database"
+    else:
+        for f in note.files:
+            f.filepath = STATIC_UPLOAD_URL + "/" + f.filepath
+        return note
+
 
 @app.get("/notes/{id_note}")
 def get_note(id_note: str, request: Request, response: Response):
     note = dao.get_note(id_note, get_user(request))
     if note is None:
         response.status_code = status.HTTP_404_NOT_FOUND
-        return "Note not found"
+        return NOTE_NOT_FOUND
     else:
         return note
 
@@ -175,7 +231,7 @@ def delete_note(id_note: str, request: Request, response: Response):
     res = dao.delete_note(id_note, get_user(request))
     if not res:
         response.status_code = status.HTTP_404_NOT_FOUND
-        return "Note not found"
+        return NOTE_NOT_FOUND
     else:
         for f in res.files:
             remove_upload(f.filepath)
