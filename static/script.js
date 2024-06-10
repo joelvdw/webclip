@@ -1,6 +1,7 @@
 const {div, p, span, article, a} = van.tags;
 
 let notes = [];
+let editingNote = undefined;
 
 /// FORMATING ///
 
@@ -119,11 +120,13 @@ document.onkeydown = function (e) {
 /// AJAX ///
 
 function getNotes() {
+    console.log('getetet');
     const xhr = new XMLHttpRequest();
     xhr.open("GET", "/notes", true);
     xhr.onreadystatechange = function () {
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200 || xhr.status === 201) {
+                console.log(xhr.status);
                 notes = JSON.parse(xhr.responseText);
                 displayNotes(notes);
             } else {
@@ -163,19 +166,43 @@ function postNote(text, uploadFiles, onSuccess) {
     xhr.send(formData);
 }
 
+function putNote(note, text, uploadFiles) {
+    const formData = new FormData();
+    if ((text ?? '') != '') {
+        formData.append("text", text);
+    }
+    for (const element of uploadFiles) {
+        formData.append("files", element);
+    }
+    // manage added files (uploadFiles) and removedFiles
+
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", "/notes/" + note.id, true);
+    xhr.onreadystatechange = function () {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+            if (xhr.status === 200 || xhr.status === 201) {
+                onNoteEdited(xhr.responseText);
+            } else {
+                showAlert("Erreur: " + xhr.responseText);
+            }
+        }
+    };
+    xhr.onerror = (e) => showAlert("Erreur: " + JSON.stringify(e));
+    xhr.send(formData);
+}
+
 function invertPinNote(id) {
     const note = notes.find(n => n.id == id);
     const action = note.pinned ? "/unpin" : "/pin";
 
     const xhr = new XMLHttpRequest();
+    console.log("fff", note, action);
     xhr.open("PUT", "/notes/" + id + action, true);
     xhr.onreadystatechange = function () {
+        console.log("efef", xhr.readyState, xhr.status);
         if (xhr.readyState === XMLHttpRequest.DONE) {
             if (xhr.status === 200) {
-                // Delete and reinsert node to sort it
-                notes = notes.filter(n => n.id != id);
-                document.getElementById("note" + id).remove();
-                onNoteCreated(xhr.responseText);
+                reload();
             } else {
                 showAlert("Error: " + xhr.responseText);
             }
@@ -204,6 +231,17 @@ function deleteNote(id) {
 
 /// UTILS ///
 
+function editNote(id) {
+    const note = notes.find(n => n.id == id);
+    editingNote = note;
+    document.querySelector(".modal form").reset();
+    document.querySelector(".modal textarea").textContent = note.text;
+    document.querySelector(".modal .add-files").innerHTML = "";
+    uploadFiles = [];
+    removedFiles = [];
+    showModal();
+}
+
 function reload() {
     getNotes();
 }
@@ -212,7 +250,9 @@ function clearModal() {
     document.querySelector(".modal textarea").textContent = "";
     document.querySelector(".modal form").reset();
     document.querySelector(".modal .add-files").innerHTML = "";
+    editingNote = undefined;
     uploadFiles = [];
+    removedFiles = [];
 }
 function showModal() {
     document.getElementById("modal").classList.add("visible");
@@ -243,6 +283,7 @@ function showAlert(text, type = 'error') {
 }
 
 function displayNotes(notes) {
+    console.log("dd", notes);
     let container = document.querySelector("section");
     container.innerHTML = "";
     for (const note of notes) {
@@ -298,6 +339,16 @@ function modalDragLeave() {
     document.getElementById('dropzone-modal').classList.remove('visible');
 }
 
+function uploadFilesPush(file) {
+    console.log(file, file.name);
+    // Test if a file with the same name already exists
+    if (uploadFiles.filter(f => f.name === file.name).length == 0) {
+        uploadFiles.push(file);
+    } else {
+        showAlert('Les fichiers d\'une même note ne peuvent pas avoir le même nom');
+    }
+}
+
 function dropFileModal(ev) {
     ev.preventDefault(true);
     ev.stopPropagation();
@@ -308,7 +359,7 @@ function dropFileModal(ev) {
             if (item.kind === "file") {
                 if (item.webkitGetAsEntry().isFile) {
                     const file = item.getAsFile();
-                    uploadFiles.push(file);
+                    uploadFilesPush(file);
                 } else {
                     showAlert("Les dossiers ne sont pas supportés");
                 }
@@ -316,7 +367,7 @@ function dropFileModal(ev) {
         });
     } else {
         [...ev.dataTransfer.files].forEach((file, _i) => {
-            uploadFiles.push(file);
+            uploadFilesPush(file);
         });
     }
 
@@ -357,7 +408,11 @@ function dropFileFull(ev) {
     }
 
     if (files.length != 0) {
-        postNote(undefined, files, onNoteCreated);
+        if ([...new Set(files.map(f => f.name))].length == files.length) {
+            postNote(undefined, files, onNoteCreated);
+        } else {
+            showAlert("Les fichiers ne peuvent pas avoir le même nom");
+        }
     }
 }
 
@@ -368,6 +423,7 @@ function dragOverHandler(ev) {
 /// FORM UPLOAD ///
 
 let uploadFiles = [];
+let removedFiles = [];
 
 function openFileInput() {
     document.querySelector(".modal input[type=file]").click();
@@ -375,7 +431,7 @@ function openFileInput() {
 function takeFilesFromInput() {
     let input = document.querySelector(".modal input[type=file]");
     for (const element of input.files) {
-        uploadFiles.push(element);
+        uploadFilesPush(element);
     }
     input.value = null;
 
@@ -398,7 +454,11 @@ function sendForm() {
         return;
     }
 
-    postNote(text, uploadFiles, onNoteCreated);
+    if (editingNote != undefined) {
+        putNote(editingNote, text, uploadFiles);
+    } else {
+        postNote(text, uploadFiles, onNoteCreated);
+    }
 }
 
 function onNoteCreated(note) {
@@ -406,7 +466,6 @@ function onNoteCreated(note) {
     let cont = document.querySelector("section");
     let n = JSON.parse(note);
     const firstUnpinned = notes.findIndex(note => note.pinned === false);
-    console.log(notes, firstUnpinned)
     if (firstUnpinned == -1) {
         notes.push(n);
         cont.appendChild(NoteItem(n));
