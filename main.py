@@ -170,15 +170,15 @@ def put_note(
     request: Request,
     response: Response,
     added_files: Annotated[List[UploadFile], [File()]] = copy([]),
-    removed_files: List[str] = copy([]),
+    removed_files: List[str] = Form(copy([])),
     text: Optional[str] = Form(None),
 ):
     note = dao.get_note(id_note, get_user(request))
     if note is None:
         response.status_code = status.HTTP_404_NOT_FOUND
         return NOTE_NOT_FOUND
-
-    if added_files is not None:
+    
+    if added_files is None:
         added_files = []
     added_files = filter_files(added_files)
 
@@ -188,7 +188,6 @@ def put_note(
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return "Failed to save files"
 
-    # TODO: front, add msg error if file with same name already exists in note (add or update)
     new_files = [f for f in note.files if f.name not in removed_files]
     new_files.extend(ClipFile(
             name=uf.filename if uf.filename else "File",
@@ -202,7 +201,7 @@ def put_note(
         files=new_files
     )
     
-    note = dao.add_note(dto, get_user(request))
+    note = dao.edit_note(id_note, dto, get_user(request))
     if note is None:
         remove_uploads(saved_files)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -219,6 +218,7 @@ def pin_note(id_note: str, request: Request, response: Response):
         response.status_code = status.HTTP_404_NOT_FOUND
         return NOTE_NOT_FOUND
     return note
+
 @app.put("/notes/{id_note}/unpin")
 def unpin_note(id_note: str, request: Request, response: Response):
     note = dao.edit_pin_note(id_note, False, get_user(request))
