@@ -201,15 +201,22 @@ def put_note(
         files=new_files
     )
     
-    note = dao.edit_note(id_note, dto, get_user(request))
-    if note is None:
+    new_note = dao.edit_note(id_note, dto, get_user(request))
+    if new_note is None:
         remove_uploads(saved_files)
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return "Failed to insert note in database"
     else:
-        for f in note.files:
+        for f in new_note.files:
             f.filepath = STATIC_UPLOAD_URL + "/" + f.filepath
-        return note
+            
+        # Remove deleted files
+        for name in removed_files:
+            f = next(v for v in note.files if v.name == name)
+            if f is not None:
+                remove_upload(f.filepath)
+        
+        return new_note
 
 @app.put("/notes/{id_note}/pin")
 def pin_note(id_note: str, request: Request, response: Response):

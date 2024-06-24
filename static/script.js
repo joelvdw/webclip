@@ -1,7 +1,8 @@
 const { div, p, span, article, a } = van.tags;
 
 let notes = [];
-let editingNote = undefined;
+let editingNote;
+let deletingNote;
 
 /// FORMATING ///
 
@@ -152,7 +153,7 @@ const NoteItem = (note) =>
         {
           class: "material-symbols-outlined",
           role: "button",
-          onclick: () => deleteNote(note.id),
+          onclick: () => confirmNoteDelete(note.id),
         },
         "delete"
       )
@@ -298,7 +299,6 @@ function invertPinNote(id) {
 }
 
 function deleteNote(id) {
-  // TODO ask for a confirmation before deleting
   const xhr = new XMLHttpRequest();
   xhr.open("DELETE", "/notes/" + id, true);
   xhr.onreadystatechange = function () {
@@ -349,6 +349,22 @@ function hideModal() {
   document.getElementById("modal").classList.remove("visible");
   clearModal();
 }
+
+function confirmNoteDelete(id) {
+  deletingNote = id;
+  document.getElementById("delete-modal").classList.add("visible");
+}
+function confirmDelete() {
+  if (deletingNote != undefined) {
+    deleteNote(deletingNote);
+    hideDeleteModal();
+  }
+}
+function hideDeleteModal() {
+  document.getElementById("delete-modal").classList.remove("visible");
+  deletingNote = undefined;
+}
+
 
 function showAlert(text, type = "error") {
   let alert = document.querySelector(".alert");
@@ -605,6 +621,10 @@ function onNoteEdited(noteJson) {
     let cont = document.querySelector("section");
     cont.insertBefore(NoteItem(note), elem);
     elem.remove();
+
+    curr.text = note.text;
+    curr.files = note.files;
+    curr.pinned = note.pinned;
 
     showAlert("Note modifiée", "success");
   } else {

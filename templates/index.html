@@ -61,6 +61,16 @@
         </form>
     </div>
 
+    <div class="modal" id="delete-modal">
+        <form class="modal-content">
+            <p>La note va être supprimée définitivement.</p>
+            <div class="buttons">
+                <button class="red" type="button" onclick="confirmDelete()">Confirmer</button>
+                <button class="normal" type="button" onclick="hideDeleteModal()">Annuler</button>
+            </div>
+        </form>
+    </div>
+
     <script type="text/javascript" src="https://cdn.jsdelivr.net/gh/vanjs-org/van/public/van-1.2.7.nomodule.min.js"></script>
     <script type="text/javascript" src="{{ url_for('static', path='/script.js') }}"></script>
 </body>
