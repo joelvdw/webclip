@@ -22,6 +22,15 @@ class ClipFile(BaseModel):
     filepath: str
     filetype: str
     size: int
+    
+    @staticmethod
+    def from_db_object(db_obj) -> ClipFile:
+        return ClipFile(
+            name=db_obj['name'],
+            filepath=db_obj['filepath'],
+            filetype=db_obj['filetype'],
+            size=db_obj['size']
+        )
 
 class ClipNoteDTO(BaseModel):
     text: str | None
@@ -39,9 +48,9 @@ class ClipNote(BaseModel):
         return ClipNote(
             id=str(db_obj['_id']),
             creation_date=db_obj['creation_date'],
-            text=db_obj['text'],
-            pinned=db_obj['pinned'],
-            files=[ClipFile(**f) for f in db_obj['files']]
+            text=db_obj.get('text') or '',
+            pinned=db_obj.get('pinned') or False,
+            files=[ClipFile(**f) for f in (db_obj.get('files') or [])]
         )
 
 ## DAO methods
@@ -110,3 +119,11 @@ class DAO:
     def delete_note(self, id: str, user: str) -> ClipNote | None:
         res = self.get_collec(user).find_one_and_delete({"_id": ObjectId(id)})
         return ClipNote.from_db_obj(res)
+    
+    def get_file_info(self, fileid: str, user: str) -> ClipFile | None:
+        n = self.get_collec(user).find_one({"files.filepath": fileid})
+        if n is None:
+            return None
+        
+        return next((ClipFile.from_db_object(f) for f in (n.get('files') or []) if f['filepath'] == fileid), None)
+    

@@ -99,7 +99,7 @@ const NoteFileItem = (file) =>
       iconFromType(file.filetype)
     ),
     p(
-      formatFilename(file.name),
+      a({ class: "file-link", href: file.filepath, target: "_blank" }, formatFilename(file.name)),
       span({ class: "size" }, formatSize(file.size))
     ),
     a(

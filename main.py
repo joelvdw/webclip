@@ -56,7 +56,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 upload_path = Path(UPLOAD_DIR)
 if not upload_path.exists():
     os.mkdir(upload_path)
-app.mount(STATIC_UPLOAD_URL, StaticFiles(directory=upload_path), name="uploads")
 
 
 # Get the user in the request headers, or return a default user if not present
@@ -65,7 +64,27 @@ def get_user(request: Request) -> str:
         return request.headers.get(USER_HEADER) or '__default_user__'
     else:
         return '__default_user__'
-
+    
+def is_valid_uuid(uuid_to_test: str, version: int = 4):
+    try:
+        uuid_obj = uuid.UUID(uuid_to_test, version=version)
+    except ValueError:
+        return False
+    return str(uuid_obj) == uuid_to_test
+    
+@app.get(STATIC_UPLOAD_URL + "/{fileid}")
+def get_upload(request: Request, response: Response, fileid: str):
+    if not is_valid_uuid(fileid):
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return
+    
+    fileinfo = dao.get_file_info(fileid, get_user(request))
+    file = upload_path.joinpath("./" + fileid)
+    
+    if file.exists() and fileinfo is not None:
+        return FileResponse(file, media_type=fileinfo.filetype, filename=fileinfo.name, content_disposition_type='inline')
+    else:
+        response.status_code = status.HTTP_404_NOT_FOUND
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
